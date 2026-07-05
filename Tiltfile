@@ -33,8 +33,10 @@ k8s_yaml(helm(
     name='anki-frontend',
     namespace='anki',
     set=[
-        'containerPort=5173',   # dev image runs the Vite dev server
-        'ingress.enabled=false' # reach it via the Tilt port-forward instead
+        'containerPort=5173',  # dev image runs the Vite dev server
+        # Served at https://anki.thereedfamily.rocks even in dev; PUBLIC_HOST
+        # points Vite's HMR websocket at the ingress hostname.
+        'env.PUBLIC_HOST=anki.thereedfamily.rocks',
     ],
 ))
 

@@ -9,6 +9,9 @@ containerPort: 80
 
 replicas: 1
 
+# Extra environment variables for the container (name: value).
+env: {}
+
 ingress:
   enabled: true
   host: anki.thereedfamily.rocks
