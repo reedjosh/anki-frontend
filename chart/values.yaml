@@ -1,0 +1,22 @@
+image:
+  repository: ghcr.io/reedjosh/anki-frontend
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# Port the container listens on: 80 for the prod (nginx) image,
+# 5173 when Tilt runs the dev (Vite) image.
+containerPort: 80
+
+replicas: 1
+
+ingress:
+  enabled: true
+  host: anki.thereedfamily.rocks
+  clusterIssuer: letsencrypt
+
+resources:
+  requests:
+    cpu: 25m
+    memory: 64Mi
+  limits:
+    memory: 256Mi
