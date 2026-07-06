@@ -7,9 +7,8 @@ metadata:
     app: {{ .Release.Name }}
   annotations:
     cert-manager.io/cluster-issuer: {{ .Values.ingress.clusterIssuer }}
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik  # HTTP->HTTPS redirect is global on Traefik's web entrypoint
   rules:
     - host: {{ .Values.ingress.host }}
       http:
