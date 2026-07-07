@@ -17,6 +17,23 @@ ingress:
   host: anki.thereedfamily.rocks
   clusterIssuer: letsencrypt
 
+backend:
+  image:
+    repository: ghcr.io/reedjosh/anki-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  storage:
+    # The Anki collection database. NFS + SQLite is workable for a
+    # single low-traffic writer; move to local-path if it misbehaves.
+    className: nfs-kubedata
+    size: 5Gi
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+
 resources:
   requests:
     cpu: 25m

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { answerCard, nextCards, type Card, type Deck, type Ease } from '../api/client'
+import { useCallback, useEffect, useState } from 'react'
+import { answerCard, nextCard, type Card, type Deck, type Ease } from '../api/client'
 
 const EASES: { ease: Ease; label: string; className: string }[] = [
   { ease: 'again', label: 'Again', className: 'bg-red-600' },
@@ -9,20 +9,21 @@ const EASES: { ease: Ease; label: string; className: string }[] = [
 ]
 
 export default function Review({ deck, onExit }: { deck: Deck; onExit: () => void }) {
-  const [queue, setQueue] = useState<Card[] | null>(null)
+  const [card, setCard] = useState<Card | null | undefined>(undefined) // undefined = loading
   const [revealed, setRevealed] = useState(false)
 
-  useEffect(() => {
-    nextCards(deck.id).then(setQueue)
+  const advance = useCallback(() => {
+    setRevealed(false)
+    setCard(undefined)
+    nextCard(deck.id).then(setCard)
   }, [deck.id])
 
-  const card = queue?.[0]
+  useEffect(advance, [advance])
 
   async function answer(ease: Ease) {
     if (!card) return
     await answerCard(card.id, ease)
-    setRevealed(false)
-    setQueue((q) => q!.slice(1))
+    advance()
   }
 
   return (
@@ -34,9 +35,9 @@ export default function Review({ deck, onExit }: { deck: Deck; onExit: () => voi
         <h1 className="truncate font-semibold">{deck.name}</h1>
       </header>
 
-      {!queue ? (
-        <p className="p-4 text-gray-500">Loading cards…</p>
-      ) : !card ? (
+      {card === undefined ? (
+        <p className="p-4 text-gray-500">Loading…</p>
+      ) : card === null ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 p-4">
           <p className="text-2xl">🎉</p>
           <p className="text-gray-600">Deck finished for now.</p>
@@ -47,13 +48,11 @@ export default function Review({ deck, onExit }: { deck: Deck; onExit: () => voi
             className="flex flex-1 flex-col items-center justify-center gap-6 p-6 text-center"
             onClick={() => setRevealed(true)}
           >
-            <p className="text-3xl">{card.front}</p>
-            {revealed && (
-              <>
-                <hr className="w-24 border-gray-300" />
-                <p className="text-2xl text-gray-700">{card.back}</p>
-              </>
-            )}
+            {/* Anki renders card templates to HTML (own <style> included). */}
+            <div
+              className="text-xl"
+              dangerouslySetInnerHTML={{ __html: revealed ? card.back : card.front }}
+            />
           </main>
 
           <footer className="p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">

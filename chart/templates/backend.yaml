@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-collection
+  labels:
+    app: {{ .Release.Name }}-backend
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: {{ .Values.backend.storage.className }}
+  resources:
+    requests:
+      storage: {{ .Values.backend.storage.size }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-backend
+  labels:
+    app: {{ .Release.Name }}-backend
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate # single collection volume; never two writers
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-backend
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-backend
+    spec:
+      containers:
+        - name: api
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            - name: ANKI_COLLECTION_PATH
+              value: /data/collection.anki2
+          volumeMounts:
+            - name: collection
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+      volumes:
+        - name: collection
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-collection
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-backend
+  labels:
+    app: {{ .Release.Name }}-backend
+spec:
+  selector:
+    app: {{ .Release.Name }}-backend
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
